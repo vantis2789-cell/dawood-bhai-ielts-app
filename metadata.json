@@ -1,0 +1,6 @@
+{
+  "name": "DB IELTS Studio",
+  "description": "Futuristic IELTS Preparation, Practice & Mock Test Command Center by Sahil VANTIS for Dawood Bhai IELTS Studio.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
