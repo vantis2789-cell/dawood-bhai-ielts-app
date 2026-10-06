@@ -36,10 +36,12 @@ import com.example.ui.theme.*
 fun ResultScreen(
     customBand: Double? = null,
     onNavigateBack: () -> Unit,
-    onStartRecommendedPractice: (IeltsModuleType) -> Unit
+    onStartRecommendedPractice: (IeltsModuleType) -> Unit,
+    onNavigateToReview: () -> Unit = {}
 ) {
     val repository = remember { IeltsRepository.getInstance() }
     val userProfile by repository.userProfile.collectAsState()
+    val completedAttempts by repository.completedAttempts.collectAsState()
 
     val listeningBand = userProfile.listeningBand
     val readingBand = userProfile.readingBand
@@ -272,44 +274,33 @@ fun ResultScreen(
             }
         }
 
-        // Question Review Section
-        item {
-            Text(
-                text = "SAMPLE QUESTION REVIEW",
-                style = MaterialTheme.typography.labelSmall.copy(
-                    color = TextSecondary,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
+        // Question Review Section (Dynamic from User's Attempt)
+        val latestAttempt = completedAttempts.firstOrNull()
+        if (latestAttempt != null && latestAttempt.answers.isNotEmpty()) {
+            item {
+                Text(
+                    text = "LATEST ATTEMPT QUESTION REVIEW",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = TextSecondary,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
                 )
-            )
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                ReviewItem(
-                    qNum = 1,
-                    qType = "Form Completion",
-                    userAns = "Highfield",
-                    correctAns = "Highfield",
-                    isCorrect = true,
-                    explanation = "Alex confirmed address: '42 Highfield Crescent'."
-                )
-                ReviewItem(
-                    qNum = 2,
-                    qType = "Multiple Choice",
-                    userAns = "Heated pool",
-                    correctAns = "Heated pool",
-                    isCorrect = true,
-                    explanation = "Primary weekend sporting facility is heated pool."
-                )
-                ReviewItem(
-                    qNum = 3,
-                    qType = "True / False / Not Given",
-                    userAns = "FALSE",
-                    correctAns = "NOT GIVEN",
-                    isCorrect = false,
-                    explanation = "The passage does not state how many nations adopted deep basalt storage."
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    latestAttempt.answers.take(4).forEach { ans ->
+                        ReviewItem(
+                            qNum = ans.questionNumber,
+                            qType = "Item",
+                            userAns = ans.userAnswer ?: "(Unanswered)",
+                            correctAns = ans.correctAnswer,
+                            isCorrect = ans.isCorrect,
+                            explanation = ans.explanation
+                        )
+                    }
+                }
             }
         }
 
@@ -323,6 +314,34 @@ fun ResultScreen(
                     lineHeight = 16.sp
                 )
             )
+        }
+
+        // Action Buttons: Detailed Review & Dashboard
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onNavigateToReview,
+                    modifier = Modifier
+                        .weight(1.2f)
+                        .height(48.dp)
+                        .testTag("result_detailed_review_btn"),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(Icons.Default.FactCheck, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Question Review", fontSize = 12.sp)
+                }
+
+                FuturisticGlowButton(
+                    text = "DASHBOARD",
+                    onClick = onNavigateBack,
+                    modifier = Modifier.weight(1f),
+                    testTag = "result_home_btn"
+                )
+            }
         }
     }
 }

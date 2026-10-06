@@ -43,6 +43,10 @@ fun MockTestRunnerScreen(
     val mockTests by repository.mockTests.collectAsState()
     val activeTest = mockTests.find { it.id == testId } ?: mockTests.first()
 
+    val attemptId = remember(testId) {
+        repository.startAttempt(testId, activeTest.moduleType)
+    }
+
     val allQuestions = remember(activeTest) {
         activeTest.sections.flatMap { it.questions }
     }
@@ -51,6 +55,7 @@ fun MockTestRunnerScreen(
     val currentQuestion = allQuestions.getOrNull(currentQuestionIndex) ?: allQuestions.first()
 
     val userAnswers = remember { mutableStateMapOf<String, String>() }
+    val markedForReview = remember { mutableStateMapOf<String, Boolean>() }
     var secondsRemaining by remember { mutableIntStateOf(activeTest.durationMinutes * 60) }
     var isSubmitting by remember { mutableStateOf(false) }
     var showConfirmSubmitDialog by remember { mutableStateOf(false) }
@@ -63,10 +68,8 @@ fun MockTestRunnerScreen(
         }
         if (secondsRemaining == 0 && !isSubmitting) {
             isSubmitting = true
-            val correctCount = allQuestions.count { q ->
-                userAnswers[q.id]?.trim()?.equals(q.correctAnswer.trim(), ignoreCase = true) == true
-            }
-            val band = BandScoreCalculator.calculateListeningBand((correctCount * 40) / allQuestions.size.coerceAtLeast(1))
+            val timeTaken = (activeTest.durationMinutes * 60) - secondsRemaining
+            val band = repository.submitAttempt(attemptId, timeTaken)
             onTestSubmitted(band)
         }
     }
@@ -257,8 +260,61 @@ fun MockTestRunnerScreen(
                     isSubmitted = false,
                     onSelectAnswer = { ans ->
                         userAnswers[currentQuestion.id] = ans
+                        repository.saveAnswer(
+                            attemptId = attemptId,
+                            questionId = currentQuestion.id,
+                            questionNumber = currentQuestion.questionNumber,
+                            prompt = currentQuestion.prompt,
+                            userAnswer = ans,
+                            correctAnswer = currentQuestion.correctAnswer,
+                            explanation = currentQuestion.explanation,
+                            isMarkedForReview = markedForReview[currentQuestion.id] ?: false
+                        )
                     }
                 )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    val isMarked = markedForReview[currentQuestion.id] ?: false
+                    OutlinedButton(
+                        onClick = {
+                            val newMarked = !isMarked
+                            markedForReview[currentQuestion.id] = newMarked
+                            if (userAnswers[currentQuestion.id] != null) {
+                                repository.saveAnswer(
+                                    attemptId = attemptId,
+                                    questionId = currentQuestion.id,
+                                    questionNumber = currentQuestion.questionNumber,
+                                    prompt = currentQuestion.prompt,
+                                    userAnswer = userAnswers[currentQuestion.id],
+                                    correctAnswer = currentQuestion.correctAnswer,
+                                    explanation = currentQuestion.explanation,
+                                    isMarkedForReview = newMarked
+                                )
+                            }
+                        },
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = if (isMarked) NeonAmber else TextSecondary
+                        ),
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            if (isMarked) NeonAmber else SurfaceBorder
+                        )
+                    ) {
+                        Icon(
+                            imageVector = if (isMarked) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(if (isMarked) "Marked for Review" else "Mark for Review", fontSize = 12.sp)
+                    }
+                }
             }
         }
 
@@ -328,10 +384,8 @@ fun MockTestRunnerScreen(
                     onClick = {
                         showConfirmSubmitDialog = false
                         isSubmitting = true
-                        val correctCount = allQuestions.count { q ->
-                            userAnswers[q.id]?.trim()?.equals(q.correctAnswer.trim(), ignoreCase = true) == true
-                        }
-                        val band = BandScoreCalculator.calculateListeningBand((correctCount * 40) / allQuestions.size.coerceAtLeast(1))
+                        val timeTaken = (activeTest.durationMinutes * 60) - secondsRemaining
+                        val band = repository.submitAttempt(attemptId, timeTaken)
                         onTestSubmitted(band)
                     }
                 ) {

@@ -12,23 +12,23 @@ enum class IeltsType(val displayName: String) {
 }
 
 data class UserProfile(
-    val id: String = "usr_01",
-    val name: String = "Haris Mahmood",
-    val email: String = "haris.ielts@academy.db",
+    val id: String = "guest",
+    val name: String = "Candidate",
+    val email: String = "",
     val role: UserRole = UserRole.STUDENT,
     val ieltsType: IeltsType = IeltsType.ACADEMIC,
-    val currentBand: Double = 6.5,
+    val currentBand: Double = 0.0,
     val targetBand: Double = 7.5,
-    val examDateDaysLeft: Int = 42,
+    val examDateDaysLeft: Int = 30,
     val dailyGoalMinutes: Int = 60,
-    val streakDays: Int = 7,
-    val studyHoursTotal: Double = 24.5,
-    val xp: Int = 1850,
-    val level: Int = 4,
-    val listeningBand: Double = 7.5,
-    val readingBand: Double = 7.0,
-    val writingBand: Double = 6.5,
-    val speakingBand: Double = 6.5
+    val streakDays: Int = 0,
+    val studyHoursTotal: Double = 0.0,
+    val xp: Int = 0,
+    val level: Int = 1,
+    val listeningBand: Double = 0.0,
+    val readingBand: Double = 0.0,
+    val writingBand: Double = 0.0,
+    val speakingBand: Double = 0.0
 )
 
 enum class IeltsModuleType(val displayName: String, val iconName: String) {
@@ -201,4 +201,50 @@ data class IntelligentRecommendation(
     val estimatedMinutes: Int,
     val reason: String,
     val urgencyLevel: String // "High", "Medium", "Review"
+)
+
+data class IeltsBook(
+    val id: String,
+    val title: String,
+    val edition: String,
+    val publisher: String,
+    val coverUrl: String? = null,
+    val testCount: Int = 4,
+    val isActive: Boolean = true
+)
+
+data class AttemptAnswer(
+    val questionId: String,
+    val questionNumber: Int,
+    val prompt: String,
+    val userAnswer: String?,
+    val correctAnswer: String,
+    val isCorrect: Boolean,
+    val isMarkedForReview: Boolean = false,
+    val explanation: String
+)
+
+data class TestAttempt(
+    val id: String,
+    val userId: String,
+    val testId: String,
+    val testTitle: String,
+    val moduleType: IeltsModuleType,
+    val rawScore: Int,
+    val totalQuestions: Int,
+    val bandScore: Double,
+    val timeTakenSeconds: Int,
+    val isCompleted: Boolean,
+    val startedAt: Long,
+    val completedAt: Long?,
+    val answers: List<AttemptAnswer> = emptyList()
+)
+
+data class IeltsNotification(
+    val id: String,
+    val title: String,
+    val message: String,
+    val type: String, // "TEST_RESULT", "TEACHER_FEEDBACK", "MISSION", "SYSTEM"
+    val isRead: Boolean = false,
+    val createdAt: Long = System.currentTimeMillis()
 )

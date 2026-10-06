@@ -31,7 +31,8 @@ import com.example.ui.theme.*
 fun LearnScreen(
     onNavigateToModule: (IeltsModuleType) -> Unit,
     onNavigateToVocab: () -> Unit,
-    onNavigateToGrammar: () -> Unit
+    onNavigateToGrammar: () -> Unit,
+    onNavigateToAiSpeaking: () -> Unit = {}
 ) {
     LazyColumn(
         modifier = Modifier
@@ -63,6 +64,76 @@ fun LearnScreen(
                 text = "Systematic lessons, authentic exam strategies, and diagnostic drills designed by Dawood Bhai IELTS Studio.",
                 style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary)
             )
+        }
+
+        // Featured: AI English Speaking Practice
+        item {
+            FuturisticGlassCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onNavigateToAiSpeaking() },
+                borderColor = NeonCyan.copy(alpha = 0.6f),
+                testTag = "learn_card_ai_speaking"
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(50.dp)
+                                .clip(CircleShape)
+                                .background(NeonCyan.copy(alpha = 0.2f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.SmartToy, contentDescription = null, tint = NeonCyan, modifier = Modifier.size(28.dp))
+                        }
+
+                        Spacer(modifier = Modifier.width(14.dp))
+
+                        Column {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(NeonGreen.copy(alpha = 0.15f))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "NEW • AI INTERACTIVE EXAMINER",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        color = NeonGreen,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Practice Speaking with AI",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
+                            )
+                            Text(
+                                text = "Live speech conversation, real-time rubric band scoring & vocabulary upgrades",
+                                style = MaterialTheme.typography.bodySmall.copy(color = TextSecondary, fontSize = 11.sp)
+                            )
+                        }
+                    }
+
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = null,
+                        tint = NeonCyan,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
         }
 
         // Section: Four Core Modules

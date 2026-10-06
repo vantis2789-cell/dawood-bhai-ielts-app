@@ -25,18 +25,21 @@ import com.example.data.repository.IeltsRepository
 import com.example.ui.components.FuturisticGlassCard
 import com.example.ui.components.FuturisticGlowButton
 import com.example.ui.theme.*
+import kotlinx.coroutines.launch
 
 @Composable
 fun AuthScreen(
     onLoginSuccess: () -> Unit
 ) {
     var isRegisterMode by remember { mutableStateOf(false) }
-    var email by remember { mutableStateOf("haris.ielts@academy.db") }
-    var password by remember { mutableStateOf("ieltsPass2026") }
-    var fullName by remember { mutableStateOf("Haris Mahmood") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var fullName by remember { mutableStateOf("") }
     var selectedRole by remember { mutableStateOf(UserRole.STUDENT) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var showForgotPasswordDialog by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
     val repository = remember { IeltsRepository.getInstance() }
 
@@ -199,15 +202,33 @@ fun AuthScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 FuturisticGlowButton(
-                    text = if (isRegisterMode) "REGISTER WITH SUPABASE" else "SIGN IN TO COMMAND CENTER",
+                    text = if (isLoading) "AUTHENTICATING..." else if (isRegisterMode) "REGISTER WITH SUPABASE" else "SIGN IN TO COMMAND CENTER",
                     onClick = {
                         if (!email.contains("@") || !email.contains(".")) {
                             errorMessage = "Please enter a valid email address."
                         } else if (password.length < 6) {
                             errorMessage = "Password must contain at least 6 characters."
                         } else {
-                            repository.switchUserRole(selectedRole)
-                            onLoginSuccess()
+                            isLoading = true
+                            errorMessage = null
+                            coroutineScope.launch {
+                                val result = if (isRegisterMode) {
+                                    repository.registerUser(
+                                        email = email,
+                                        password = password,
+                                        fullName = fullName,
+                                        role = selectedRole
+                                    )
+                                } else {
+                                    repository.loginUser(email = email, password = password)
+                                }
+                                isLoading = false
+                                result.onSuccess {
+                                    onLoginSuccess()
+                                }.onFailure { error ->
+                                    errorMessage = error.message ?: "Authentication failed. Please retry."
+                                }
+                            }
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),

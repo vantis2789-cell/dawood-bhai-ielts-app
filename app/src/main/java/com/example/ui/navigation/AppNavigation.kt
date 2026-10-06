@@ -26,6 +26,7 @@ import com.example.ui.screens.about.AboutScreen
 import com.example.ui.screens.admin.AdminDashboardScreen
 import com.example.ui.screens.auth.AuthScreen
 import com.example.ui.screens.grammar.GrammarLabScreen
+import com.example.ui.screens.history.TestHistoryScreen
 import com.example.ui.screens.home.HomeScreen
 import com.example.ui.screens.learn.LearnScreen
 import com.example.ui.screens.listening.ListeningPracticeScreen
@@ -35,6 +36,8 @@ import com.example.ui.screens.onboarding.OnboardingScreen
 import com.example.ui.screens.profile.ProfileScreen
 import com.example.ui.screens.reading.ReadingPracticeScreen
 import com.example.ui.screens.result.ResultScreen
+import com.example.ui.screens.review.QuestionReviewScreen
+import com.example.ui.screens.speaking.AiSpeakingPracticeScreen
 import com.example.ui.screens.speaking.SpeakingPracticeScreen
 import com.example.ui.screens.writing.WritingPracticeScreen
 import com.example.ui.screens.splash.SplashScreen
@@ -55,8 +58,11 @@ enum class AppDestination {
     READING_PRACTICE,
     WRITING_PRACTICE,
     SPEAKING_PRACTICE,
+    AI_SPEAKING_PRACTICE,
     MOCK_TEST_RUNNER,
     RESULT_ANALYSIS,
+    TEST_HISTORY,
+    QUESTION_REVIEW,
     GRAMMAR_LAB,
     TEACHER_DASHBOARD,
     ADMIN_DASHBOARD,
@@ -69,6 +75,7 @@ fun AppNavigation() {
     var previousDestination by remember { mutableStateOf(AppDestination.MAIN_HOME) }
     var resultScoreOverride by remember { mutableStateOf<Double?>(null) }
     var activeRunningTestId by remember { mutableStateOf("test_ac_01") }
+    var activeReviewAttemptId by remember { mutableStateOf<String?>(null) }
 
     fun navigateTo(dest: AppDestination) {
         previousDestination = currentDestination
@@ -96,10 +103,13 @@ fun AppNavigation() {
             AppDestination.LISTENING_PRACTICE,
             AppDestination.READING_PRACTICE,
             AppDestination.WRITING_PRACTICE,
-            AppDestination.SPEAKING_PRACTICE -> navigateTo(AppDestination.MAIN_LEARN)
+            AppDestination.SPEAKING_PRACTICE,
+            AppDestination.AI_SPEAKING_PRACTICE -> navigateTo(AppDestination.MAIN_LEARN)
             AppDestination.MOCK_TEST_RUNNER -> navigateTo(AppDestination.MAIN_TESTS)
             AppDestination.GRAMMAR_LAB -> navigateTo(AppDestination.MAIN_LEARN)
-            AppDestination.RESULT_ANALYSIS -> navigateTo(AppDestination.MAIN_HOME)
+            AppDestination.RESULT_ANALYSIS,
+            AppDestination.TEST_HISTORY -> navigateTo(AppDestination.MAIN_HOME)
+            AppDestination.QUESTION_REVIEW -> navigateTo(AppDestination.TEST_HISTORY)
             AppDestination.TEACHER_DASHBOARD,
             AppDestination.ADMIN_DASHBOARD,
             AppDestination.ABOUT -> navigateTo(AppDestination.MAIN_PROFILE)
@@ -160,7 +170,8 @@ fun AppNavigation() {
                             resultScoreOverride = 7.0
                             navigateTo(AppDestination.RESULT_ANALYSIS)
                         },
-                        onRoleChanged = { /* state handled in repository */ }
+                        onRoleChanged = { /* state handled in repository */ },
+                        onNavigateToHistory = { navigateTo(AppDestination.TEST_HISTORY) }
                     )
                 }
 
@@ -177,7 +188,8 @@ fun AppNavigation() {
                             }
                         },
                         onNavigateToVocab = { navigateTo(AppDestination.MAIN_VOCAB) },
-                        onNavigateToGrammar = { navigateTo(AppDestination.GRAMMAR_LAB) }
+                        onNavigateToGrammar = { navigateTo(AppDestination.GRAMMAR_LAB) },
+                        onNavigateToAiSpeaking = { navigateTo(AppDestination.AI_SPEAKING_PRACTICE) }
                     )
                 }
 
@@ -249,13 +261,40 @@ fun AppNavigation() {
                     )
                 }
 
+                AppDestination.AI_SPEAKING_PRACTICE -> {
+                    AiSpeakingPracticeScreen(
+                        onNavigateBack = { navigateTo(AppDestination.MAIN_LEARN) }
+                    )
+                }
+
                 AppDestination.RESULT_ANALYSIS -> {
                     ResultScreen(
                         customBand = resultScoreOverride,
                         onNavigateBack = { navigateTo(AppDestination.MAIN_HOME) },
                         onStartRecommendedPractice = { module ->
                             navigateTo(AppDestination.WRITING_PRACTICE)
+                        },
+                        onNavigateToReview = {
+                            navigateTo(AppDestination.QUESTION_REVIEW)
                         }
+                    )
+                }
+
+                AppDestination.TEST_HISTORY -> {
+                    TestHistoryScreen(
+                        onNavigateBack = { navigateTo(AppDestination.MAIN_HOME) },
+                        onOpenAttemptReview = { attemptId ->
+                            activeReviewAttemptId = attemptId
+                            navigateTo(AppDestination.QUESTION_REVIEW)
+                        },
+                        onStartNewTest = { navigateTo(AppDestination.MAIN_TESTS) }
+                    )
+                }
+
+                AppDestination.QUESTION_REVIEW -> {
+                    QuestionReviewScreen(
+                        attemptId = activeReviewAttemptId,
+                        onNavigateBack = { navigateTo(AppDestination.TEST_HISTORY) }
                     )
                 }
 

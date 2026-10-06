@@ -7,9 +7,12 @@ import com.example.data.model.IeltsModuleType
 import com.example.data.model.IeltsType
 import com.example.data.model.QuestionType
 import com.example.data.model.TestQuestion
+import com.example.data.model.UserRole
+import com.example.data.repository.IeltsRepository
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -131,6 +134,79 @@ class ExampleUnitTest {
         val validPassword = "password2026"
         assertFalse(shortPassword.length >= 6)
         assertTrue(validPassword.length >= 6)
+    }
+
+    @Test
+    fun testRepositoryAttemptLifecycleAndScoring() = runBlocking {
+        val repository = IeltsRepository.getInstance()
+
+        // 1. Start Attempt
+        val attemptId = repository.startAttempt("test_ac_01", IeltsModuleType.READING)
+        assertNotNull(attemptId)
+        assertTrue(attemptId.startsWith("att_"))
+
+        // 2. Save Answers
+        repository.saveAnswer(
+            attemptId = attemptId,
+            questionId = "qr1_1",
+            questionNumber = 1,
+            prompt = "Subterranean ecosystems contain roughly one-third of all living biomass on Earth.",
+            userAnswer = "TRUE",
+            correctAnswer = "TRUE",
+            explanation = "Passage confirms statement.",
+            isMarkedForReview = false
+        )
+        repository.saveAnswer(
+            attemptId = attemptId,
+            questionId = "qr1_2",
+            questionNumber = 2,
+            prompt = "Microbial life relies primarily on solar photosynthesis.",
+            userAnswer = "FALSE",
+            correctAnswer = "FALSE",
+            explanation = "Lithotrophic organisms rely on radiolytic decay.",
+            isMarkedForReview = true
+        )
+
+        // 3. Submit Attempt
+        val calculatedBand = repository.submitAttempt(attemptId, timeTakenSeconds = 450)
+        assertTrue(calculatedBand >= 2.5 && calculatedBand <= 9.0)
+
+        // 4. Retrieve Question Review
+        val reviewAttempt = repository.getAttemptReview(attemptId)
+        assertNotNull(reviewAttempt)
+        assertEquals(attemptId, reviewAttempt?.id)
+        assertEquals(2, reviewAttempt?.answers?.size)
+        assertTrue(reviewAttempt?.answers?.all { it.isCorrect } == true)
+    }
+
+    @Test
+    fun testRepositoryAuthenticationWorkflow() = runBlocking {
+        val repository = IeltsRepository.getInstance()
+
+        // Register new actual candidate
+        val regResult = repository.registerUser(
+            email = "candidate.real@academy.db",
+            password = "securePassword2026",
+            fullName = "Candidate Alpha",
+            role = UserRole.STUDENT
+        )
+        assertTrue(regResult.isSuccess)
+        assertEquals("Candidate Alpha", regResult.getOrNull()?.name)
+
+        // Login with actual registered credentials
+        val loginResult = repository.loginUser("candidate.real@academy.db", "securePassword2026")
+        assertTrue(loginResult.isSuccess)
+        assertEquals("Candidate Alpha", loginResult.getOrNull()?.name)
+        assertEquals(UserRole.STUDENT, loginResult.getOrNull()?.role)
+
+        // Login with admin credentials
+        val adminResult = repository.loginUser("admin@dawoodbhai-ielts.com", "admin2026")
+        assertTrue(adminResult.isSuccess)
+        assertEquals(UserRole.ADMIN, adminResult.getOrNull()?.role)
+
+        // Logout
+        repository.logoutUser()
+        assertEquals("", repository.userProfile.value.name)
     }
 
     @Test

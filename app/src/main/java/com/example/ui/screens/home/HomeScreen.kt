@@ -37,11 +37,13 @@ fun HomeScreen(
     onNavigateToModule: (IeltsModuleType) -> Unit,
     onNavigateToMockTest: () -> Unit,
     onNavigateToResult: () -> Unit,
-    onRoleChanged: () -> Unit
+    onRoleChanged: () -> Unit,
+    onNavigateToHistory: () -> Unit = {}
 ) {
     val repository = remember { IeltsRepository.getInstance() }
     val userProfile by repository.userProfile.collectAsState()
     val dailyMissions by repository.dailyMissions.collectAsState()
+    val completedAttempts by repository.completedAttempts.collectAsState()
 
     val completedMissions = dailyMissions.count { it.isCompleted }
     val totalMissions = dailyMissions.size
@@ -67,7 +69,7 @@ fun HomeScreen(
             ) {
                 Column {
                     Text(
-                        text = "Good Evening, ${userProfile.name}",
+                        text = if (userProfile.name.isNotBlank()) "Good Evening, ${userProfile.name}" else "Welcome, Candidate",
                         style = MaterialTheme.typography.headlineMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = TextPrimary
@@ -521,6 +523,103 @@ fun HomeScreen(
                         onClick = onNavigateToMockTest,
                         testTag = "take_mock_test_btn"
                     )
+                }
+            }
+        }
+
+        // Recent Test Attempts & History Section (Database Driven)
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "RECENT TEST ATTEMPTS",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = TextSecondary,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                    )
+                    if (completedAttempts.isNotEmpty()) {
+                        Text(
+                            text = "View All History",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = NeonCyan,
+                                fontWeight = FontWeight.Bold
+                            ),
+                            modifier = Modifier
+                                .clickable { onNavigateToHistory() }
+                                .testTag("view_all_history_btn")
+                        )
+                    }
+                }
+
+                if (completedAttempts.isEmpty()) {
+                    FuturisticGlassCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onNavigateToMockTest() },
+                        borderColor = SurfaceBorder,
+                        testTag = "home_empty_attempts_card"
+                    ) {
+                        Text(
+                            text = "No tests completed yet.",
+                            style = MaterialTheme.typography.titleSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Complete your first timed practice or mock test to establish your personalized band history and diagnostic review.",
+                            style = MaterialTheme.typography.bodySmall.copy(color = TextSecondary)
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = "Tap to launch Mock Test Center →",
+                            style = MaterialTheme.typography.labelSmall.copy(color = NeonCyan, fontWeight = FontWeight.Bold)
+                        )
+                    }
+                } else {
+                    completedAttempts.take(2).forEach { att ->
+                        FuturisticGlassCard(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onNavigateToHistory() },
+                            borderColor = NeonCyan.copy(alpha = 0.3f),
+                            testTag = "home_attempt_item_${att.id}"
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = att.testTitle,
+                                        style = MaterialTheme.typography.titleSmall.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            color = TextPrimary
+                                        )
+                                    )
+                                    Text(
+                                        text = "${att.rawScore}/${att.totalQuestions} Correct • ${att.timeTakenSeconds / 60}m spent",
+                                        style = MaterialTheme.typography.bodySmall.copy(color = TextSecondary)
+                                    )
+                                }
+                                Text(
+                                    text = String.format("Band %.1f", att.bandScore),
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Black,
+                                        color = NeonGreen
+                                    )
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }

@@ -253,7 +253,22 @@ fun TeacherDashboardScreen(
             )
         }
 
-        items(writingSubmissions) { sub ->
+        if (writingSubmissions.isEmpty()) {
+            item {
+                FuturisticGlassCard(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "No Student Essay Submissions Yet",
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, color = TextPrimary)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "When students write and submit essays in the Writing Practice module, they will appear here in real-time for evaluation and grading.",
+                        style = MaterialTheme.typography.bodySmall.copy(color = TextSecondary)
+                    )
+                }
+            }
+        } else {
+            items(writingSubmissions) { sub ->
             FuturisticGlassCard(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -328,7 +343,22 @@ fun TeacherDashboardScreen(
             )
         }
 
-        items(speakingSubmissions) { spk ->
+        if (speakingSubmissions.isEmpty()) {
+            item {
+                FuturisticGlassCard(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "No Student Speaking Recordings Yet",
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, color = TextPrimary)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "When students record and submit speaking responses in the Speaking Practice module, they will appear here in real-time for examiner review.",
+                        style = MaterialTheme.typography.bodySmall.copy(color = TextSecondary)
+                    )
+                }
+            }
+        } else {
+            items(speakingSubmissions) { spk ->
             FuturisticGlassCard(
                 modifier = Modifier.fillMaxWidth(),
                 borderColor = NeonGreen.copy(alpha = 0.35f)
@@ -372,6 +402,7 @@ fun TeacherDashboardScreen(
                     }
                 }
             }
+        }
         }
     }
 }

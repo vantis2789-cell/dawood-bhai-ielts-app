@@ -88,7 +88,7 @@ fun ProfileScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = userProfile.name.take(2).uppercase(),
+                            text = userProfile.name.ifBlank { "Candidate" }.take(2).uppercase(),
                             style = MaterialTheme.typography.titleLarge.copy(
                                 fontWeight = FontWeight.Black,
                                 color = NeonCyan
@@ -100,14 +100,14 @@ fun ProfileScreen(
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = userProfile.name,
+                            text = userProfile.name.ifBlank { "Candidate" },
                             style = MaterialTheme.typography.titleLarge.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = TextPrimary
                             )
                         )
                         Text(
-                            text = userProfile.email,
+                            text = userProfile.email.ifBlank { "Tap Sign In to sync profile" },
                             style = MaterialTheme.typography.bodySmall.copy(color = TextSecondary)
                         )
                         Spacer(modifier = Modifier.height(4.dp))
